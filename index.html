@@ -5,44 +5,144 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Tesla Latausteholaskuri</title>
   <style>
-    body { font-family: sans-serif; padding: 2rem; max-width: 600px; margin: auto; }
-    h1 { color: #cc0000; }
-    input[type=range] { width: 100%; }
-    label { font-weight: bold; display: block; margin-top: 1.5rem; }
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      max-width: 700px;
+      margin: auto;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      color: #cc0000;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .slider-group {
+      margin-bottom: 1.5rem;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 1rem;
+    }
+    input[type=range] {
+      width: 100%;
+    }
+    .info {
+      background-color: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    img.car {
+      max-width: 100%;
+      margin: 1rem 0;
+    }
   </style>
 </head>
 <body>
-  <h1>🔋 Tesla Latausteholaskuri</h1>
+  <h1>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/e/e8/Tesla_logo.png" alt="Tesla logo" width="30" />
+    Tesla Latausteholaskuri
+  </h1>
+
+  <img src="https://tesla-cdn.thron.com/delivery/public/image/tesla/797c3d27-229d-4b2b-b2b0-46a505a5adf4/bvlatuR/std/4096x2560/Model-3-Performance-Red-Hero-Desktop" alt="Tesla Model 3 Highland" class="car" />
+
+  <div class="slider-group">
+    <label for="sauna">Sauna (kW): <span id="saunaVal">8</span></label>
+    <input type="range" id="sauna" min="0" max="10" step="0.1" value="8">
+
+    <label for="ilp">Ilmalämpöpumppu (kW): <span id="ilpVal">1</span></label>
+    <input type="range" id="ilp" min="0" max="3" step="0.1" value="1">
+
+    <label for="liesi">Liesi/Uuni (kW): <span id="liesiVal">3</span></label>
+    <input type="range" id="liesi" min="0" max="5" step="0.1" value="3">
+
+    <label for="astianpesukone">Astianpesukone (kW): <span id="astianpesukoneVal">1.2</span></label>
+    <input type="range" id="astianpesukone" min="0" max="2" step="0.1" value="1.2">
+
+    <label for="pyykinpesukone">Pyykinpesukone (kW): <span id="pyykinpesukoneVal">1.5</span></label>
+    <input type="range" id="pyykinpesukone" min="0" max="2.5" step="0.1" value="1.5">
+
+    <label for="poreallas">Poreallas (kW): <span id="poreVal">5</span></label>
+    <input type="range" id="poreallas" min="0" max="6" step="0.1" value="5">
+
+    <label for="muu">Muu kulutus (kW): <span id="muuVal">2</span></label>
+    <input type="range" id="muu" min="0" max="5" step="0.1" value="2">
+  </div>
+
   <label for="amps">Latausvirta (A): <span id="ampVal">6</span></label>
   <input type="range" id="amps" min="0" max="16" value="6" />
-  <p>Latausteho: <strong id="kw">4.1</strong> kW</p>
-  <p>Arvioitu nopeus: <strong id="kmh">23</strong> km/h</p>
-  <p>Turvallinen maksimi (kuorma huomioiden): <strong id="safe">?</strong> A</p>
+
+  <div class="info">
+    <p><strong>Kokonaiskuormitus:</strong> <span id="totalLoad">--</span> kW</p>
+    <p><strong>Latausteho:</strong> <span id="kw">--</span> kW</p>
+    <p><strong>Arvioitu nopeus:</strong> <span id="kmh">--</span> km/h</p>
+    <p><strong>Turvallinen maksimi (3x16A huomioiden):</strong> <span id="safe">--</span> A</p>
+  </div>
 
   <script>
+    const sauna = document.getElementById('sauna');
+    const ilp = document.getElementById('ilp');
+    const liesi = document.getElementById('liesi');
+    const pore = document.getElementById('poreallas');
+    const muu = document.getElementById('muu');
+    const astianpesukone = document.getElementById('astianpesukone');
+    const pyykinpesukone = document.getElementById('pyykinpesukone');
     const ampsInput = document.getElementById('amps');
+
+    const saunaVal = document.getElementById('saunaVal');
+    const ilpVal = document.getElementById('ilpVal');
+    const liesiVal = document.getElementById('liesiVal');
+    const poreVal = document.getElementById('poreVal');
+    const muuVal = document.getElementById('muuVal');
+    const astianpesukoneVal = document.getElementById('astianpesukoneVal');
+    const pyykinpesukoneVal = document.getElementById('pyykinpesukoneVal');
     const ampVal = document.getElementById('ampVal');
+
+    const totalLoad = document.getElementById('totalLoad');
     const kw = document.getElementById('kw');
     const kmh = document.getElementById('kmh');
     const safe = document.getElementById('safe');
 
-    const kodinKuormaKW = 7;
-    const maksimiKW = 11;
+    const maxKW = 11;
 
     function update() {
+      const saunaKW = parseFloat(sauna.value);
+      const ilpKW = parseFloat(ilp.value);
+      const liesiKW = parseFloat(liesi.value);
+      const poreKW = parseFloat(pore.value);
+      const muuKW = parseFloat(muu.value);
+      const astianpesukoneKW = parseFloat(astianpesukone.value);
+      const pyykinpesukoneKW = parseFloat(pyykinpesukone.value);
       const a = parseInt(ampsInput.value);
-      const latausKW = ((a * 230 * 3) / 1000);
+
+      const kotikuorma = saunaKW + ilpKW + liesiKW + poreKW + muuKW + astianpesukoneKW + pyykinpesukoneKW;
+      const latausKW = (a * 230 * 3) / 1000;
       const nopeus = Math.round((a / 16) * 60);
-      const vapaaKW = maksimiKW - kodinKuormaKW;
+      const vapaaKW = maxKW - kotikuorma;
       const turvallinenA = Math.floor((vapaaKW * 1000) / (230 * 3));
 
+      saunaVal.textContent = saunaKW;
+      ilpVal.textContent = ilpKW;
+      liesiVal.textContent = liesiKW;
+      poreVal.textContent = poreKW;
+      muuVal.textContent = muuKW;
+      astianpesukoneVal.textContent = astianpesukoneKW;
+      pyykinpesukoneVal.textContent = pyykinpesukoneKW;
       ampVal.textContent = a;
+
+      totalLoad.textContent = (kotikuorma + latausKW).toFixed(1);
       kw.textContent = latausKW.toFixed(1);
       kmh.textContent = nopeus;
       safe.textContent = Math.max(0, Math.min(16, turvallinenA));
     }
 
-    ampsInput.addEventListener('input', update);
+    document.querySelectorAll('input').forEach(input => {
+      input.addEventListener('input', update);
+    });
+
     update();
   </script>
 </body>
