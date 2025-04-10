@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tesla Latausteholaskuri</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; max-width: 600px; margin: auto; }
+    h1 { color: #cc0000; }
+    input[type=range] { width: 100%; }
+    label { font-weight: bold; display: block; margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+  <h1>🔋 Tesla Latausteholaskuri</h1>
+  <label for="amps">Latausvirta (A): <span id="ampVal">6</span></label>
+  <input type="range" id="amps" min="0" max="16" value="6" />
+  <p>Latausteho: <strong id="kw">4.1</strong> kW</p>
+  <p>Arvioitu nopeus: <strong id="kmh">23</strong> km/h</p>
+  <p>Turvallinen maksimi (kuorma huomioiden): <strong id="safe">?</strong> A</p>
+
+  <script>
+    const ampsInput = document.getElementById('amps');
+    const ampVal = document.getElementById('ampVal');
+    const kw = document.getElementById('kw');
+    const kmh = document.getElementById('kmh');
+    const safe = document.getElementById('safe');
+
+    const kodinKuormaKW = 7;
+    const maksimiKW = 11;
+
+    function update() {
+      const a = parseInt(ampsInput.value);
+      const latausKW = ((a * 230 * 3) / 1000);
+      const nopeus = Math.round((a / 16) * 60);
+      const vapaaKW = maksimiKW - kodinKuormaKW;
+      const turvallinenA = Math.floor((vapaaKW * 1000) / (230 * 3));
+
+      ampVal.textContent = a;
+      kw.textContent = latausKW.toFixed(1);
+      kmh.textContent = nopeus;
+      safe.textContent = Math.max(0, Math.min(16, turvallinenA));
+    }
+
+    ampsInput.addEventListener('input', update);
+    update();
+  </script>
+</body>
+</html>
